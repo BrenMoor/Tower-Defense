@@ -56,6 +56,8 @@ namespace Tower_Defense_Knock_Off
         public GameScreen()
         {
             InitializeComponent();
+            Cursor.Hide();
+          
             OnStart();
             player.PlayLooping();
 
