@@ -27,6 +27,7 @@ namespace Tower_Defense_Knock_Off
         int selectY = 0;
         int turretX = 0;
         int turretY = 0;
+        int bulletX, bulletY;
         int turretSize = 80;
         int points = 100;
         int lives = 100;
@@ -40,15 +41,18 @@ namespace Tower_Defense_Knock_Off
         //Class Lists
         List<enemy> Enemies = new List<enemy>();
         List<turret> Turrets = new List<turret>();
+        List<bullet> Bullets = new List<bullet>();
         //Other lists
         List<select> select = new List<select>();
         List<int> xTurret = new List<int>();
         List<int> yTurret = new List<int>();
         List<int> xBullet = new List<int>();
         List<int> yBullet = new List<int>();
+        List<int> xEnemy = new List<int>();
+        List<int> yEnemy = new List<int>();
         List<string> directionBullet = new List<string>();
         SoundPlayer player = new SoundPlayer(Properties.Resources.Defense_Line);
-     
+
         public GameScreen()
         {
             InitializeComponent();
@@ -62,7 +66,7 @@ namespace Tower_Defense_Knock_Off
             //Begins enemy creation
             enemy b1 = new enemy(enemyX, enemyY, enemySize, enemySize);
             Enemies.Add(b1);
-          
+
 
 
         }
@@ -167,7 +171,7 @@ namespace Tower_Defense_Knock_Off
             foreach (turret t in Turrets)
             {
                 e.Graphics.FillEllipse(blackBrush, t.turretX, t.turretY, turretSize, turretSize);
-            }   
+            }
             if (pauseScreen == true)
             {
                 e.Graphics.DrawImage(Properties.Resources.PAUSE, 255, 120, 768, 432);
@@ -176,48 +180,83 @@ namespace Tower_Defense_Knock_Off
             {
                 e.Graphics.DrawImage(Properties.Resources.LOSE, 255, 120, 768, 432);
             }
+            foreach (bullet b in Bullets)
+            {
+                e.Graphics.FillEllipse(blackBrush, b.bulletX, b.bulletY, b.bulletSize, b.bulletSize);
+            }
         }
         private void gameTimer_Tick(object sender, EventArgs e)
         {
             //Tick counters
             enemyCounter++;
             waitCounter++;
+            shotTimer++;
+
             if (escKeyDown == true)
             {
                 gameTimer.Stop();
                 pauseScreen = true;
             }
             //Check for enough points to place a turret
-            if (enterKeyDown == true && points >= 20) 
+            if (enterKeyDown == true && points >= 20)
+            {
+                turretEnter = true;
+                //Set turret XY to selector XY
+                turretX = selectX;
+                turretY = selectY;
+                bool turretCheck = false;
+                foreach (turret t in Turrets)
                 {
-                    turretEnter = true;
-                    //Set turret XY to selector XY
-                    turretX = selectX;
-                    turretY = selectY;
-                    bool turretCheck = false;
-                    foreach (turret t in Turrets)
-                    {
-                        if (selectX == t.turretX && selectY == t.turretY)
-                        {
-
-                            turretCheck = true;
-                            break;
-                        }
-
-                    }
-                    if (turretCheck == false)
+                    if (selectX == t.turretX && selectY == t.turretY)
                     {
 
-                        turret t1 = new turret(turretX, turretY, turretSize, turretSize);
-                        Turrets.Add(t1);
-                        points = points - 20;
+                        turretCheck = true;
+                        break;
                     }
 
-
-                    waitCounter = 0;
                 }
-            
-        
+                if (turretCheck == false)
+                {
+
+                    turret t1 = new turret(turretX, turretY, turretSize, turretSize);
+                    Turrets.Add(t1);
+                    points = points - 20;
+                }
+
+
+                waitCounter = 0;
+            }
+
+            if (shotTimer == 20)
+            {
+                foreach (turret t in Turrets)
+                {
+
+                    bullet b1 = new bullet(t.turretX + 40, t.turretY + 35, 10, 10);
+                    Bullets.Add(b1);
+
+                }
+                shotTimer = 0;
+            }
+
+            foreach (bullet b in Bullets)
+            {
+                b.Move();
+
+            }
+            foreach (bullet b in Bullets)
+            {
+                foreach (enemy z in Enemies)
+                {
+                    if (b.Collision(z))
+                    {
+                        Bullets.Remove(b);
+                        Enemies.Remove(z);
+                        points++;
+                        return;
+                    }
+                }
+            }
             if (enemyCounter == 20)
             {
                 enemy b1 = new enemy(enemyX, enemyY, enemySize, enemySize);
@@ -227,8 +266,13 @@ namespace Tower_Defense_Knock_Off
             foreach (enemy b in Enemies)
             {
                 b.Move(enemySpeed);
+              
             }
-           if (selectY > 0)
+            
+
+
+            {
+                if (selectY > 0)
                 {
                     if (wKeyDown == true)
                     {
@@ -267,11 +311,12 @@ namespace Tower_Defense_Knock_Off
                     if (lives == 0)
                     {
                         gameTimer.Enabled = false;
-                    loseScreen = true;
+                        loseScreen = true;
                     }
                 }
                 Refresh();
             }
         }
     }
+}
 
